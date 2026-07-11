@@ -1,16 +1,53 @@
-version: '3.8'
-
 services:
   postgres:
-    image: postgres:16
+    image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: blood_donor_admin
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
     ports:
-      - '5432:5432'
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d blood_donor_admin"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ../../apps/api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://admin:${DB_PASSWORD:-password}@postgres:5432/blood_donor_admin
+      JWT_SECRET: ${JWT_SECRET:-change-me-to-a-random-secret}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      GOOGLE_SHEETS_API_KEY: ${GOOGLE_SHEETS_API_KEY:-}
+      PORTAL_URL: ${PORTAL_URL:-http://localhost:4000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ../../apps/web
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:4000
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - api
 
 volumes:
   pgdata:

@@ -29,6 +29,18 @@ export interface GridSchema {
   columns: GridColumn[]
 }
 
+export interface SheetConnection {
+  id: string
+  name: string
+  spreadsheetId: string
+  sheetUrl: string
+  tableName: string
+  columnMetadata: GridColumn[]
+  active: boolean
+  lastSyncedAt: string | null
+  createdAt: string
+}
+
 export const BLOOD_TYPES = [
   { value: 'A+', label: 'A+' },
   { value: 'A-', label: 'A-' },

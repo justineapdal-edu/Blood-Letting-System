@@ -28,3 +28,36 @@ export interface GridSchema {
   tableName: string
   columns: GridColumn[]
 }
+
+export interface SheetConnection {
+  id: string
+  name: string
+  spreadsheetId: string
+  sheetUrl: string
+  tableName: string
+  columnMetadata: GridColumn[]
+  active: boolean
+  lastSyncedAt: string | null
+  createdAt: string
+}
+
+export interface SheetImportRequest {
+  name: string
+  url: string
+}
+
+export interface SheetImportResponse {
+  success: boolean
+  data?: SheetConnection
+  rowCount?: number
+  message?: string
+  error?: string
+}
+
+export interface SyncResponse {
+  success: boolean
+  rowCount?: number
+  lastSyncedAt?: string
+  message?: string
+  error?: string
+}
