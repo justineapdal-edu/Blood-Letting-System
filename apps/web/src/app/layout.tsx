@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import { Geist } from 'next/font/google'
-import { Shell } from '@/components/layout/Shell'
+import { AuthProvider } from '@/lib/auth-context'
+import { AuthGuard } from '@/components/auth-guard'
+import { LayoutRouter } from '@/components/layout-router'
 import './globals.css'
 
 const geist = Geist({
@@ -11,7 +13,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={geist.className}>
       <body className="min-h-screen bg-gray-50 antialiased">
-        <Shell>{children}</Shell>
+        <AuthProvider>
+          <AuthGuard>
+            <LayoutRouter>{children}</LayoutRouter>
+          </AuthGuard>
+        </AuthProvider>
       </body>
     </html>
   )

@@ -3,12 +3,15 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useAuth } from '@/lib/auth-context'
+import { useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
   TableProperties,
   Grid3x3,
   Archive,
   Settings,
+  LogOut,
   PanelLeftClose,
   PanelLeftOpen,
   Droplets,
@@ -23,8 +26,15 @@ const navItems = [
 ]
 
 export function Sidebar() {
+  const { user, logout } = useAuth()
+  const router = useRouter()
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+
+  async function handleLogout() {
+    await logout()
+    router.push('/auth/login')
+  }
 
   return (
     <aside
@@ -65,6 +75,21 @@ export function Sidebar() {
           )
         })}
       </nav>
+
+      {user && (
+        <div className="border-t border-gray-200 p-3">
+          {!collapsed && (
+            <div className="mb-2 truncate text-xs text-gray-500">{user.email}</div>
+          )}
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+          >
+            <LogOut className="h-4 w-4 shrink-0" />
+            {!collapsed && <span>Sign Out</span>}
+          </button>
+        </div>
+      )}
     </aside>
   )
 }

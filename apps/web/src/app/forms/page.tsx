@@ -135,7 +135,7 @@ export default function FormsPage() {
                       )}
                     </div>
                     <div className="mt-1 flex items-center gap-4 text-xs text-gray-500">
-                      <span className="font-mono">{form.token.slice(0, 12)}...{form.token.slice(-4)}</span>
+                      <span className="font-mono">{form.token?.slice(0, 12)}...{form.token?.slice(-4)}</span>
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {formatDate(form.lastSyncedAt)}
@@ -210,7 +210,7 @@ export default function FormsPage() {
                 </code>
                 <Button
                   variant="secondary"
-                  onClick={() => navigator.clipboard.writeText(scriptModal.token)}
+                  onClick={() => navigator.clipboard.writeText(scriptModal.token ?? '')}
                 >
                   Copy
                 </Button>
@@ -224,7 +224,7 @@ export default function FormsPage() {
               </p>
               <div className="relative">
                 <pre className="max-h-64 overflow-auto rounded-lg bg-gray-900 p-3 text-xs text-gray-100 font-mono whitespace-pre-wrap">
-                  {buildAppsScript(portalUrl, scriptModal.token)}
+                  {buildAppsScript(portalUrl, scriptModal.token ?? '')}
                 </pre>
                 <Button
                   variant="secondary"
@@ -243,7 +243,7 @@ export default function FormsPage() {
             <div>
               <p className="text-xs font-medium text-gray-700 mb-1">Step 3: Set up the trigger</p>
               <p className="text-xs text-gray-500">
-                Edit → Current project&apos;s triggers → Add trigger →
+                In Apps Script: Edit → Current project&apos;s triggers → Add trigger →
                 Function: <code className="bg-gray-100 px-1 rounded">onSubmit</code>,
                 Event: <code className="bg-gray-100 px-1 rounded">On form submit</code>
               </p>

@@ -35,7 +35,7 @@ export function SheetsImporter() {
         setSheets(res.data)
       }
     } catch (err) {
-      // Silent fail on list load — don't spam toast on mount
+      // Silent fail on list load
     }
   }, [])
 
@@ -196,7 +196,7 @@ export function SheetsImporter() {
                   )}
                 </div>
                 <div className="mt-1 flex items-center gap-4 text-xs text-gray-500">
-                  <span>{sheet.columnMetadata.length} columns</span>
+                  <span>{sheet.columnMetadata?.length ?? 0} columns</span>
                   <span className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     Last synced: {formatDate(sheet.lastSyncedAt)}
