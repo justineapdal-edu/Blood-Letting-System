@@ -199,7 +199,7 @@ BEGIN
   
   -- Build ORDER BY clause
   IF sort_column IS NOT NULL AND sort_column != '' THEN
-    order_clause := format(
+    order_clause := format( 
       ' ORDER BY %I %s',
       sort_column,
       CASE WHEN sort_direction = 'desc' THEN 'DESC' ELSE 'ASC' END
