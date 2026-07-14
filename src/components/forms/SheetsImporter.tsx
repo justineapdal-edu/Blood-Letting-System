@@ -170,9 +170,8 @@ export function SheetsImporter() {
         </div>
 
         <p className="text-xs text-gray-400">
-          Paste a Google Sheets URL. The sheet must be set to &quot;Anyone with the link can view&quot;.
-          A Google Sheets API key must be configured on the server.
-          Data will be imported into a dynamically created database table.
+          Paste a Google Sheets URL. Go to <strong>File → Share → Publish to web</strong> or set the sheet to
+          &quot;Anyone with the link can view&quot;. Data will be imported into a database table.
         </p>
       </form>
 

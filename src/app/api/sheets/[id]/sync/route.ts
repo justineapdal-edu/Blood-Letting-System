@@ -1,4 +1,5 @@
 import { createServiceClient } from '@/lib/supabase'
+import { parseCsv, sanitizeHeader } from '@/lib/csv'
 
 export async function POST(
   _request: Request,
@@ -28,45 +29,29 @@ export async function POST(
       )
     }
 
-    const apiKey = process.env.GOOGLE_SHEETS_API_KEY
-    if (!apiKey) {
-      return Response.json(
-        { success: false, error: 'Google Sheets API key not configured' },
-        { status: 500 }
-      )
-    }
-
-    const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${connection.spreadsheet_id}/values/A:Z?key=${apiKey}`
-    const response = await fetch(apiUrl)
-    const sheetData = await response.json()
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${connection.spreadsheet_id}/export?format=csv`
+    const response = await fetch(csvUrl)
 
     if (!response.ok) {
       return Response.json(
-        { success: false, error: sheetData.error?.message ?? 'Failed to fetch sheet data' },
+        { success: false, error: 'Failed to fetch sheet. Make sure the sheet is still shared as "Anyone with the link can view".' },
         { status: 400 }
       )
     }
 
-    const values = sheetData.values
-    if (!values || values.length < 2) {
+    const csv = await response.text()
+    const rows = parseCsv(csv)
+
+    if (rows.length < 2) {
       return Response.json(
         { success: false, error: 'Sheet is empty or has no data rows' },
         { status: 400 }
       )
     }
 
-    const headers = values[0].map((h: string) =>
-      h
-        .toLowerCase()
-        .replace(/[^a-z0-9\s_]/g, '')
-        .replace(/\s+/g, '_')
-        .replace(/^(\d)/, 'col_$1')
-        .replace(/_+/g, '_')
-        .replace(/^_|_$/g, '')
-    )
-
-    const dataRows = values.slice(1).filter((row: any[]) =>
-      row.some((cell: any) => cell !== '')
+    const headers = rows[0].map(sanitizeHeader)
+    const dataRows = rows.slice(1).filter((row) =>
+      row.some((cell) => cell.trim() !== '')
     )
 
     const tableName = connection.table_name
@@ -89,7 +74,7 @@ export async function POST(
     const BATCH_SIZE = 500
     for (let i = 0; i < dataRows.length; i += BATCH_SIZE) {
       const batch = dataRows.slice(i, i + BATCH_SIZE)
-      const rows = batch.map((row: any[]) => {
+      const records = batch.map((row) => {
         const record: Record<string, string> = {}
         headers.forEach((header: string, idx: number) => {
           record[header] = row[idx] || ''
@@ -97,7 +82,7 @@ export async function POST(
         return record
       })
 
-      const { error: insertError } = await supabase.from(tableName).insert(rows)
+      const { error: insertError } = await supabase.from(tableName).insert(records)
       if (insertError) {
         throw new Error(`Failed to insert rows: ${insertError.message}`)
       }
