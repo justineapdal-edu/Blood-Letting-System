@@ -57,3 +57,16 @@ export function sanitizeHeader(h: string): string {
     .replace(/_+/g, '_')
     .replace(/^_|_$/g, '')
 }
+
+export function deduplicateHeaders(headers: string[]): string[] {
+  const seen: Record<string, number> = {}
+  return headers.map((h) => {
+    const base = h || 'column'
+    if (seen[base]) {
+      seen[base]++
+      return `${base}_${seen[base]}`
+    }
+    seen[base] = 1
+    return base
+  })
+}

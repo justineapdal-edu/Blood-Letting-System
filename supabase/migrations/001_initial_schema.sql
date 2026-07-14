@@ -160,7 +160,9 @@ RETURNS VOID AS $$
 BEGIN
   EXECUTE sql_query;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION exec_sql(TEXT) TO service_role;
 
 -- Function to safely query any table (for the DataGrid)
 CREATE OR REPLACE FUNCTION query_table(

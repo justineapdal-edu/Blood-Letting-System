@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase'
-import { parseCsv, sanitizeHeader } from '@/lib/csv'
+import { parseCsv, sanitizeHeader, deduplicateHeaders } from '@/lib/csv'
 
 function sanitizeTableName(name: string): string {
   const sanitized = name
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const headers = rows[0].map(sanitizeHeader)
+    const headers = deduplicateHeaders(rows[0].map(sanitizeHeader))
     const dataRows = rows.slice(1).filter((row) =>
       row.some((cell) => cell.trim() !== '')
     )
