@@ -1,4 +1,4 @@
-import { createServiceClient, rpc } from '@/lib/supabase'
+import { createServiceClient } from '@/lib/supabase'
 
 function sanitizeTableName(name: string): string {
   const sanitized = name
@@ -45,7 +45,6 @@ export async function POST(request: Request) {
 
     const tableName = sanitizeTableName(name.trim())
 
-    // Check for duplicate table_name
     const { data: existing } = await supabase
       .from('form_connections')
       .select('id')
@@ -59,7 +58,6 @@ export async function POST(request: Request) {
       )
     }
 
-    // Fetch sheet data using Google Sheets API
     const apiKey = process.env.GOOGLE_SHEETS_API_KEY
     if (!apiKey) {
       return Response.json(
@@ -87,7 +85,6 @@ export async function POST(request: Request) {
       )
     }
 
-    // Parse headers and data
     const headers = values[0].map((h: string) =>
       h
         .toLowerCase()
@@ -102,16 +99,10 @@ export async function POST(request: Request) {
       row.some((cell: any) => cell !== '')
     )
 
-    // Create the dynamic table
-    const createTableSQL = `
-      CREATE TABLE IF NOT EXISTS ${tableName} (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        ${headers.map((h: string) => `"${h}" TEXT`).join(',\n        ')}
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `
+    const columnDefs = headers.map((h: string) => `"${h}" TEXT`).join(', ')
+    const createTableSQL = `CREATE TABLE IF NOT EXISTS "${tableName}" (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), ${columnDefs}, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`
 
-    const { error: createError } = await rpc(supabase, 'exec_sql', {
+    const { error: createError } = await supabase.rpc('exec_sql', {
       sql_query: createTableSQL,
     })
 
@@ -122,7 +113,6 @@ export async function POST(request: Request) {
       )
     }
 
-    // Insert rows in batches
     const BATCH_SIZE = 500
     for (let i = 0; i < dataRows.length; i += BATCH_SIZE) {
       const batch = dataRows.slice(i, i + BATCH_SIZE)
@@ -136,11 +126,10 @@ export async function POST(request: Request) {
 
       const { error: insertError } = await supabase.from(tableName).insert(rows)
       if (insertError) {
-        console.error('Insert error:', insertError)
+        throw new Error(`Failed to insert rows: ${insertError.message}`)
       }
     }
 
-    // Create connection record
     const columnMetadata = headers.map((h: string) => ({
       key: h,
       label: h
