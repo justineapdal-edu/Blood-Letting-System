@@ -241,11 +241,10 @@ export default function FormsPage() {
             </div>
 
             <div>
-              <p className="text-xs font-medium text-gray-700 mb-1">Step 3: Set up the trigger</p>
+              <p className="text-xs font-medium text-gray-700 mb-1">Step 3: Authorize &amp; activate</p>
               <p className="text-xs text-gray-500">
-                In Apps Script: Edit → Current project&apos;s triggers → Add trigger →
-                Function: <code className="bg-gray-100 px-1 rounded">onSubmit</code>,
-                Event: <code className="bg-gray-100 px-1 rounded">On form submit</code>
+                In Apps Script, select <code className="bg-gray-100 px-1 rounded">setupTrigger</code> from the function dropdown and click <strong>Run</strong>.
+                Complete the authorization prompt when it appears. The trigger will be created automatically.
               </p>
             </div>
           </div>
