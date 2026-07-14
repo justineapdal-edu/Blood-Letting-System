@@ -38,42 +38,64 @@ export async function POST(request: Request) {
     const tableName = connection.table_name
     const columnNames = Object.keys(responses)
 
-    const { data: tableExists } = await supabase.rpc('check_table_exists', {
+    const { data: tableExists, error: existsError } = await supabase.rpc('check_table_exists', {
       p_table_name: tableName,
     })
 
+    if (existsError) {
+      throw new Error(`check_table_exists failed: ${existsError.message}`)
+    }
+
     if (!tableExists) {
-      const columnsJson = JSON.stringify(columnNames)
-      await supabase.rpc('create_donor_table', {
+      const { error: createError } = await supabase.rpc('create_donor_table', {
         table_name: tableName,
-        columns: columnsJson,
+        columns: columnNames,
       })
 
-      await supabase
+      if (createError) {
+        throw new Error(`create_donor_table failed: ${createError.message}`)
+      }
+
+      const { error: metaError } = await supabase
         .from('form_connections')
         .update({ column_metadata: columnNames.map((c) => ({ key: c, label: c, type: 'text' })) })
         .eq('id', connection.id)
+
+      if (metaError) {
+        throw new Error(`Failed to update column_metadata: ${metaError.message}`)
+      }
     } else {
-      const { data: existingColumns } = await supabase.rpc('get_table_columns', {
+      const { data: existingColumns, error: colError } = await supabase.rpc('get_table_columns', {
         p_table_name: tableName,
       })
+
+      if (colError) {
+        throw new Error(`get_table_columns failed: ${colError.message}`)
+      }
 
       if (existingColumns) {
         const existingNames = existingColumns.map((c: { column_name: string }) => c.column_name)
         const newColumns = columnNames.filter((c) => !existingNames.includes(c))
 
         for (const col of newColumns) {
-          await supabase.rpc('exec_sql', {
+          const { error: alterError } = await supabase.rpc('exec_sql', {
             sql_query: `ALTER TABLE "${tableName}" ADD COLUMN IF NOT EXISTS "${col}" TEXT`,
           })
+          if (alterError) {
+            throw new Error(`Failed to add column "${col}": ${alterError.message}`)
+          }
         }
 
         if (newColumns.length > 0) {
           const allColumns = [...existingNames, ...newColumns]
-          await supabase
+          const { error: metaError } = await supabase
             .from('form_connections')
             .update({ column_metadata: allColumns.map((c) => ({ key: c, label: c, type: 'text' })) })
             .eq('id', connection.id)
+
+          if (metaError) {
+            throw new Error(`Failed to update column_metadata: ${metaError.message}`)
+          }
         }
       }
     }
@@ -85,12 +107,12 @@ export async function POST(request: Request) {
 
     const { error: insertError } = await supabase.rpc('upsert_donor_record', {
       table_name: tableName,
-      record_data: JSON.stringify(recordData),
+      record_data: recordData,
       submitted_at: submittedAt || new Date().toISOString(),
     })
 
     if (insertError) {
-      throw insertError
+      throw new Error(`upsert_donor_record failed: ${insertError.message}`)
     }
 
     return Response.json({ success: true })
