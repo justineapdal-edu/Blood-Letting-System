@@ -3,6 +3,32 @@ import type { DonationStatus } from '@/types'
 
 const VALID_STATUSES: DonationStatus[] = ['pending', 'passed', 'failed']
 
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string; donorId: string }> }
+) {
+  const { id: eventId, donorId } = await params
+  const supabase = createServiceClient()
+
+  try {
+    const { data, error } = await supabase
+      .from('donor_registrations')
+      .select('*')
+      .eq('id', donorId)
+      .eq('event_id', eventId)
+      .single()
+
+    if (error || !data) {
+      return Response.json({ success: false, error: 'Donor registration not found' }, { status: 404 })
+    }
+
+    return Response.json({ success: true, data })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch donor'
+    return Response.json({ success: false, error: message }, { status: 500 })
+  }
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string; donorId: string }> }

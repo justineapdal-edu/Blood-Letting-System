@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 import { Button, Spinner } from '@/components/ui'
-import { X, Camera, CheckCircle, AlertCircle } from 'lucide-react'
+import { X, CheckCircle, AlertCircle } from 'lucide-react'
 
 interface QRScannerProps {
-  onScan: (donorId: string) => void
+  onScan: (donorId: string) => Promise<{ type: 'success' | 'error'; message: string }>
   onClose: () => void
 }
 
@@ -28,12 +28,12 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
         fps: 10,
         qrbox: { width: 250, height: 250 },
       },
-      (decodedText) => {
-        if (scanning) {
-          setScanning(false)
-          try { scanner.stop() } catch {}
-          onScan(decodedText)
-        }
+      async (decodedText) => {
+        if (!scanning) return
+        setScanning(false)
+        try { scanner.stop() } catch {}
+        const res = await onScan(decodedText)
+        setResult(res)
       },
       () => {}
     ).catch((err) => {
@@ -76,7 +76,7 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
             </div>
           ) : scanning ? (
             <>
-              <div id="qr-reader" ref={containerRef} className="overflow-hidden rounded-lg" />
+              <div id="qr-reader" ref={containerRef} className="overflow-hidden rounded-lg [&>video]:!w-full [&>video]:!h-auto [&>video]:!object-cover" />
               <div className="mt-3 flex items-center justify-center gap-2 text-sm text-gray-500">
                 <Spinner size="sm" />
                 <span>Point camera at donor QR code...</span>

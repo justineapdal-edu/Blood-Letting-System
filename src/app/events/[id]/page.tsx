@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Button, Spinner, Toast } from '@/components/ui'
 import type { BloodEvent, DonorRegistration, DonationStatus, CustomFieldSchema } from '@/types'
 import { DONATION_STATUS_OPTIONS } from '@/types'
-import { ArrowLeft, CalendarDays, MapPin, Users, Copy, Check, ExternalLink, Search, ArrowUpDown, ScanLine } from 'lucide-react'
+import { ArrowLeft, CalendarDays, MapPin, Users, Copy, Check, ExternalLink, Search, ArrowUpDown, ScanLine, RefreshCw } from 'lucide-react'
 import dynamic from 'next/dynamic'
 const QRScanner = dynamic(() => import('@/components/QRScanner'), { ssr: false })
 
@@ -46,9 +46,14 @@ export default function EventDetailPage() {
   const [donorSearch, setDonorSearch] = useState('')
   const [donorSort, setDonorSort] = useState<{ key: DonorSortKey; dir: 'asc' | 'desc' }>({ key: 'registered_at', dir: 'desc' })
   const [showScanner, setShowScanner] = useState(false)
-  const [scanResult, setScanResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => { fetchEvent() }, [eventId])
+
+  useEffect(() => {
+    const interval = setInterval(() => { fetchEvent() }, 10_000)
+    return () => clearInterval(interval)
+  }, [eventId])
 
   async function fetchEvent() {
     try {
@@ -60,7 +65,13 @@ export default function EventDetailPage() {
       setError(err instanceof Error ? err.message : 'Failed to load event')
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
+  }
+
+  async function manualRefresh() {
+    setRefreshing(true)
+    await fetchEvent()
   }
 
   function getRegistrationUrl() {
@@ -127,15 +138,26 @@ export default function EventDetailPage() {
     )
   }
 
-  async function handleScan(donorId: string) {
-    const donor = event?.donors.find((d) => d.id === donorId)
+  async function handleScan(donorId: string): Promise<{ type: 'success' | 'error'; message: string }> {
+    let donor = event?.donors.find((d) => d.id === donorId)
     if (!donor) {
-      setScanResult({ type: 'error', message: 'Donor not found for this event.' })
-      return
+      try {
+        const res = await fetch(`/api/events/${eventId}/donors/${donorId}`)
+        const json = await res.json()
+        if (json.success && json.data) {
+          donor = json.data
+          setEvent((prev) => ({
+            ...prev!,
+            donors: [...prev!.donors, json.data],
+          }))
+        }
+      } catch {}
+    }
+    if (!donor) {
+      return { type: 'error', message: 'Donor not found for this event.' }
     }
     if (donor.arrived) {
-      setScanResult({ type: 'success', message: `${donor.full_name} is already checked in.` })
-      return
+      return { type: 'success', message: `${donor.full_name} is already checked in.` }
     }
     const res = await fetch(`/api/events/${eventId}/donors/${donorId}`, {
       method: 'PATCH',
@@ -147,9 +169,9 @@ export default function EventDetailPage() {
         ...prev!,
         donors: prev!.donors.map((d) => d.id === donorId ? { ...d, arrived: true } : d),
       }))
-      setScanResult({ type: 'success', message: `${donor.full_name} has been checked in successfully!` })
+      return { type: 'success', message: `${donor.full_name} has been checked in successfully!` }
     } else {
-      setScanResult({ type: 'error', message: 'Failed to check in donor. Please try again.' })
+      return { type: 'error', message: 'Failed to check in donor. Please try again.' }
     }
   }
 
@@ -249,9 +271,12 @@ export default function EventDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 ml-4 shrink-0">
-          <Button variant="secondary" onClick={() => { setShowScanner(true); setScanResult(null) }}>
+          <Button variant="secondary" onClick={() => setShowScanner(true)}>
             <ScanLine className="mr-1.5 h-4 w-4" />
             Scan QR
+          </Button>
+          <Button variant="ghost" onClick={manualRefresh} disabled={refreshing}>
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
           </Button>
           <Button variant="primary" onClick={copyLink}>
             {copied ? <Check className="mr-1.5 h-4 w-4 text-green-300" /> : <Copy className="mr-1.5 h-4 w-4" />}
@@ -361,12 +386,8 @@ export default function EventDetailPage() {
       {showScanner && (
         <QRScanner
           onScan={(id) => handleScan(id)}
-          onClose={() => { setShowScanner(false); setScanResult(null) }}
+          onClose={() => setShowScanner(false)}
         />
-      )}
-
-      {scanResult && !showScanner && (
-        <Toast type={scanResult.type} message={scanResult.message} onDismiss={() => setScanResult(null)} />
       )}
     </div>
   )
