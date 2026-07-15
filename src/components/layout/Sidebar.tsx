@@ -15,10 +15,12 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Droplets,
+  Heart,
 } from 'lucide-react'
 
 const navItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Blood Drives', href: '/events', icon: Heart },
   { label: 'Form Integration', href: '/forms', icon: TableProperties },
   { label: 'Data Grids', href: '/grids', icon: Grid3x3 },
   { label: 'Master Registry', href: '/registry', icon: Archive },

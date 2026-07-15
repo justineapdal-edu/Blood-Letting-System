@@ -4,13 +4,13 @@ import type { ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 import { Shell } from './layout/Shell'
 
-const authPages = ['/auth/login', '/auth/signup', '/auth']
+const publicPages = ['/auth/login', '/auth/signup', '/auth', '/register']
 
 export function LayoutRouter({ children }: { children: ReactNode }) {
   const pathname = usePathname()
-  const isAuthPage = authPages.some((p) => pathname === p || pathname.startsWith(p + '/'))
+  const isPublicPage = publicPages.some((p) => pathname === p || pathname.startsWith(p + '/'))
 
-  if (isAuthPage) {
+  if (isPublicPage) {
     return <>{children}</>
   }
 
