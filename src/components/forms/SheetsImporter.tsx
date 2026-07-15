@@ -132,7 +132,12 @@ export function SheetsImporter() {
         </div>
       )}
 
-      <form onSubmit={handleConnect} className="space-y-4">
+      <form onSubmit={handleConnect} className="max-w-xl space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="flex items-center gap-2 pb-1">
+          <Link2 className="h-4 w-4 text-red-600" />
+          <h3 className="text-sm font-semibold text-gray-900">Import from Google Sheets</h3>
+        </div>
+
         <Input
           id="sheet-name"
           label="Sheet Identifier Name"
@@ -152,7 +157,7 @@ export function SheetsImporter() {
           required
         />
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex gap-3 pt-2">
           <Button type="submit" disabled={!name.trim() || !url.trim() || connecting}>
             {connecting ? (
               <span className="flex items-center gap-2">
@@ -162,71 +167,69 @@ export function SheetsImporter() {
               'Connect & Sync'
             )}
           </Button>
-          <p className="text-xs text-gray-400">
-            Paste a Google Sheets URL. Set the sheet to &quot;Anyone with the link can view&quot; or use File &rarr; Share &rarr; Publish to web.
-          </p>
         </div>
+
+        <p className="text-xs text-gray-400">
+          Paste a Google Sheets URL. Go to <strong>File → Share → Publish to web</strong> or set the sheet to
+          &quot;Anyone with the link can view&quot;. Data will be imported into a database table.
+        </p>
       </form>
 
       {sheets.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-gray-700">Connected Sheets</h3>
 
-          <div className="space-y-3">
-            {sheets.map((sheet) => (
-              <div
-                key={sheet.id}
-                className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
-              >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <Database className="h-4 w-4 shrink-0 text-red-500" />
-                      <h4 className="text-sm font-medium text-gray-900 truncate">{sheet.name}</h4>
-                      {!sheet.active && (
-                        <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
-                          Inactive
-                        </span>
-                      )}
-                    </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
-                      <span>{sheet.columnMetadata?.length ?? 0} columns</span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        Last synced: {formatDate(sheet.lastSyncedAt)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="secondary"
-                      onClick={() => handleSync(sheet.id)}
-                      disabled={syncingId === sheet.id}
-                      className="text-xs"
-                    >
-                      {syncingId === sheet.id ? (
-                        <span className="flex items-center gap-1">
-                          <Spinner size="sm" /> Syncing...
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1">
-                          <RefreshCw className="h-3 w-3" /> Sync Now
-                        </span>
-                      )}
-                    </Button>
-                    <Button
-                      variant="danger"
-                      onClick={() => handleDisconnect(sheet.id, sheet.name)}
-                      className="text-xs"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
+          {sheets.map((sheet) => (
+            <div
+              key={sheet.id}
+              className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <Database className="h-4 w-4 shrink-0 text-red-500" />
+                  <h4 className="text-sm font-medium text-gray-900 truncate">{sheet.name}</h4>
+                  {!sheet.active && (
+                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                      Inactive
+                    </span>
+                  )}
+                </div>
+                <div className="mt-1 flex items-center gap-4 text-xs text-gray-500">
+                  <span>{sheet.columnMetadata?.length ?? 0} columns</span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    Last synced: {formatDate(sheet.lastSyncedAt)}
+                  </span>
                 </div>
               </div>
-            ))}
-          </div>
+
+              <div className="flex items-center gap-2 ml-4">
+                <Button
+                  variant="secondary"
+                  onClick={() => handleSync(sheet.id)}
+                  disabled={syncingId === sheet.id}
+                  className="text-xs"
+                >
+                  {syncingId === sheet.id ? (
+                    <span className="flex items-center gap-1">
+                      <Spinner size="sm" /> Syncing...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1">
+                      <RefreshCw className="h-3 w-3" /> Sync Now
+                    </span>
+                  )}
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={() => handleDisconnect(sheet.id, sheet.name)}
+                  className="text-xs"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

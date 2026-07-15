@@ -13,9 +13,7 @@ export default function FormsPage() {
       </div>
 
       <div className="flex-1 overflow-auto px-4 pb-6 sm:px-6">
-        <div className="max-w-2xl space-y-6">
-          <SheetsImporter />
-        </div>
+        <SheetsImporter />
       </div>
     </div>
   )
