@@ -7,8 +7,7 @@ export async function GET() {
 
     if (error || !session) {
       return Response.json(
-        { success: false, authenticated: false },
-        { status: 401 }
+        { success: false, authenticated: false }
       )
     }
 

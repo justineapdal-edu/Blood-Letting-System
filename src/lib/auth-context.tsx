@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { usePathname } from 'next/navigation'
 
 interface User {
   id: string
@@ -18,9 +19,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+const publicPaths = ['/auth/login', '/auth', '/register']
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const pathname = usePathname()
+  const isPublic = publicPaths.some((p) => pathname === p || pathname.startsWith(p + '/'))
 
   const refresh = useCallback(async () => {
     try {
@@ -46,8 +51,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
+    if (isPublic) {
+      setLoading(false)
+      return
+    }
     refresh().finally(() => setLoading(false))
-  }, [refresh])
+  }, [refresh, isPublic])
 
   const login = useCallback(async (email: string, password: string) => {
     try {
