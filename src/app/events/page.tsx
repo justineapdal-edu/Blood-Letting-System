@@ -107,9 +107,9 @@ export default function EventsPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between px-6 pt-6 pb-4">
+      <div className="flex flex-col gap-3 px-4 pt-4 pb-4 sm:px-6 sm:pt-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Blood Drives</h1>
+          <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">Blood Drives</h1>
           <p className="mt-1 text-sm text-gray-500">Manage blood donation events and track donor registrations.</p>
         </div>
         <Link href="/events/new">
@@ -120,8 +120,8 @@ export default function EventsPage() {
         </Link>
       </div>
 
-      <div className="flex items-center gap-3 px-6 pb-4">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col gap-3 px-4 pb-4 sm:flex-row sm:items-center sm:px-6">
+        <div className="relative flex-1 sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
@@ -160,7 +160,7 @@ export default function EventsPage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto px-6 pb-6">
+      <div className="flex-1 overflow-auto px-4 pb-6 sm:px-6">
         {loading && (
           <div className="flex items-center justify-center py-20"><Spinner size="lg" /></div>
         )}

@@ -168,7 +168,7 @@ export default function EditEventPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-8">
+    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
       <Link href={`/events/${eventId}`} className="mb-6 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
         <ArrowLeft className="h-4 w-4" />
         Back to event
@@ -178,7 +178,7 @@ export default function EditEventPage() {
       <p className="mt-1 text-sm text-gray-500">Update event details and customize the donor registration form.</p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-8">
-        <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
           <h2 className="mb-4 text-lg font-semibold text-gray-900">Event Details</h2>
           <div className="space-y-4">
             <Input
@@ -226,7 +226,7 @@ export default function EditEventPage() {
           </div>
         </section>
 
-        <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Custom Form Fields</h2>

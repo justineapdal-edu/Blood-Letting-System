@@ -250,14 +250,14 @@ export default function EventDetailPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between px-6 pt-6 pb-4">
+      <div className="flex flex-col gap-4 px-4 pt-4 pb-4 sm:px-6 sm:pt-6 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0 flex-1">
           <Link href="/events" className="mb-2 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
             <ArrowLeft className="h-4 w-4" />Back to events
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 truncate">{event.title}</h1>
+          <h1 className="text-xl font-bold text-gray-900 truncate sm:text-2xl">{event.title}</h1>
           {event.description && <p className="mt-1 max-w-2xl text-sm text-gray-600 truncate">{event.description}</p>}
-          <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-600">
+          <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-600 sm:gap-4">
             <span className="flex items-center gap-1.5">
               <CalendarDays className="h-4 w-4 text-gray-400" />{formatDate(event.event_date)}
             </span>
@@ -270,7 +270,7 @@ export default function EventDetailPage() {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-2 ml-4 shrink-0">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="secondary" onClick={() => setShowScanner(true)}>
             <ScanLine className="mr-1.5 h-4 w-4" />
             Scan QR
@@ -280,7 +280,8 @@ export default function EventDetailPage() {
           </Button>
           <Button variant="primary" onClick={copyLink}>
             {copied ? <Check className="mr-1.5 h-4 w-4 text-green-300" /> : <Copy className="mr-1.5 h-4 w-4" />}
-            {copied ? 'Copied' : 'Copy Registration Link'}
+            <span className="hidden sm:inline">{copied ? 'Copied' : 'Copy Registration Link'}</span>
+            <span className="sm:hidden">{copied ? 'Copied' : 'Copy Link'}</span>
           </Button>
           <a href={getRegistrationUrl()} target="_blank" rel="noopener noreferrer">
             <Button variant="ghost"><ExternalLink className="h-4 w-4" /></Button>
@@ -288,11 +289,11 @@ export default function EventDetailPage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto px-6 pb-6">
+      <div className="flex-1 overflow-auto px-4 pb-6 sm:px-6">
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-gray-200 px-6 py-3">
+          <div className="flex flex-col gap-3 border-b border-gray-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <h2 className="text-sm font-semibold text-gray-900">Registered Donors</h2>
-            <div className="relative max-w-xs">
+            <div className="relative w-full sm:max-w-xs">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"

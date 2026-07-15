@@ -16,6 +16,7 @@ import {
   PanelLeftOpen,
   Droplets,
   Heart,
+  X,
 } from 'lucide-react'
 
 const navItems = [
@@ -24,10 +25,15 @@ const navItems = [
   { label: 'Form Integration', href: '/forms', icon: TableProperties },
   { label: 'Data Grids', href: '/grids', icon: Grid3x3 },
   { label: 'Master Registry', href: '/registry', icon: Archive },
-  { label: 'Settings', href: '/auth', icon: Settings },
+  { label: 'Settings', href: '/settings', icon: Settings },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  mobileOpen: boolean
+  onClose: () => void
+}
+
+export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
   const { user, logout } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
@@ -38,23 +44,31 @@ export function Sidebar() {
     router.push('/auth/login')
   }
 
-  return (
-    <aside
-      className={`flex flex-col border-r border-gray-200 bg-white transition-all ${
-        collapsed ? 'w-16' : 'w-64'
-      }`}
-    >
+  function handleNavClick() {
+    onClose()
+  }
+
+  const navContent = (
+    <>
       <div className="flex h-14 items-center gap-2 border-b border-gray-200 px-4">
         <Droplets className="h-5 w-5 shrink-0 text-red-600" />
-        <span className={`font-bold text-red-600 ${collapsed ? 'hidden' : 'block'}`}>
-          Blood Donor Admin
-        </span>
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="ml-auto text-gray-400 hover:text-gray-600"
-        >
-          {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-        </button>
+        {(!collapsed || mobileOpen) && (
+          <span className="font-bold text-red-600">Blood Donor Admin</span>
+        )}
+        <div className="ml-auto flex items-center">
+          <button
+            onClick={onClose}
+            className="rounded p-1 text-gray-400 hover:text-gray-600 md:hidden"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="hidden rounded p-1 text-gray-400 hover:text-gray-600 md:block"
+          >
+            {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+          </button>
+        </div>
       </div>
 
       <nav className="flex-1 space-y-1 p-3">
@@ -65,6 +79,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={handleNavClick}
               className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                 active
                   ? 'bg-red-50 text-red-700'
@@ -72,7 +87,7 @@ export function Sidebar() {
               }`}
             >
               <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-red-600' : ''}`} />
-              {!collapsed && <span>{item.label}</span>}
+              {(!collapsed || mobileOpen) && <span>{item.label}</span>}
             </Link>
           )
         })}
@@ -80,18 +95,38 @@ export function Sidebar() {
 
       {user && (
         <div className="border-t border-gray-200 p-3">
-          {!collapsed && (
+          {(!collapsed || mobileOpen) && (
             <div className="mb-2 truncate text-xs text-gray-500">{user.email}</div>
           )}
           <button
-            onClick={handleLogout}
+            onClick={() => { handleLogout(); handleNavClick() }}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
           >
             <LogOut className="h-4 w-4 shrink-0" />
-            {!collapsed && <span>Sign Out</span>}
+            {(!collapsed || mobileOpen) && <span>Sign Out</span>}
           </button>
         </div>
       )}
-    </aside>
+    </>
+  )
+
+  return (
+    <>
+      <aside
+        className={`hidden flex-col border-r border-gray-200 bg-white transition-all md:flex ${
+          collapsed ? 'w-16' : 'w-64'
+        }`}
+      >
+        {navContent}
+      </aside>
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-gray-200 bg-white transition-transform duration-200 md:hidden ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {navContent}
+      </aside>
+    </>
   )
 }
