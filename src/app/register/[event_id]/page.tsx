@@ -370,7 +370,7 @@ export default function RegisterPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
         <Spinner size="lg" />
       </div>
     )
@@ -378,10 +378,10 @@ export default function RegisterPage() {
 
   if (error || !event) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-6">
         <div className="w-full max-w-md text-center">
-          <Heart className="mx-auto h-12 w-12 text-red-300" />
-          <h1 className="mt-4 text-xl font-bold text-gray-900">Event Not Found</h1>
+          <Heart className="mx-auto h-10 w-10 text-red-300" />
+          <h1 className="mt-4 text-lg font-bold text-gray-900 sm:text-xl">Event Not Found</h1>
           <p className="mt-2 text-sm text-gray-500">{error || 'This event does not exist or has been removed.'}</p>
         </div>
       </div>
@@ -390,24 +390,24 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-6">
         <div className="w-full max-w-md text-center">
-          <CheckCircle className="mx-auto h-16 w-16 text-green-500" />
-          <h1 className="mt-4 text-2xl font-bold text-gray-900">Thank You!</h1>
-          <p className="mt-2 text-gray-600">
+          <CheckCircle className="mx-auto h-14 w-14 text-green-500" />
+          <h1 className="mt-4 text-xl font-bold text-gray-900 sm:text-2xl">Thank You!</h1>
+          <p className="mt-2 text-sm text-gray-600 sm:text-base">
             Your registration for <span className="font-semibold">{event.title}</span> has been received.
           </p>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-xs text-gray-500 sm:text-sm">
             We look forward to seeing you at {event.location} on {formatDate(event.event_date)}.
           </p>
 
           {donorId && (
-            <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <p className="mb-4 text-sm font-medium text-gray-700">Your Registration Ticket</p>
+            <div className="mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+              <p className="mb-3 text-sm font-medium text-gray-700">Your Registration Ticket</p>
               <div className="inline-block rounded-lg border border-gray-100 bg-white p-2 shadow-inner">
                 <QRCodeSVG
                   value={donorId}
-                  size={180}
+                  size={160}
                   bgColor="#ffffff"
                   fgColor="#1f2937"
                   level="H"
@@ -428,7 +428,7 @@ export default function RegisterPage() {
               <Button
                 variant="secondary"
                 onClick={downloadQR}
-                className="mt-4"
+                className="mt-4 w-full sm:w-auto"
               >
                 <Download className="mr-2 h-4 w-4" />
                 Download Ticket
@@ -441,30 +441,26 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm">
-        <div className="mx-auto max-w-2xl px-4 py-8 text-center">
-          <Heart className="mx-auto h-10 w-10 text-red-600" />
-          <h1 className="mt-3 text-2xl font-bold text-gray-900">{event.title}</h1>
-          {event.description && (
-            <p className="mt-2 text-sm text-gray-600">{event.description}</p>
-          )}
-          <div className="mt-4 flex items-center justify-center gap-5 text-sm text-gray-600">
-            <span className="flex items-center gap-1.5">
-              <CalendarDays className="h-4 w-4 text-gray-400" />
-              {formatDate(event.event_date)}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <MapPin className="h-4 w-4 text-gray-400" />
-              {event.location}
-            </span>
+    <div className="min-h-screen bg-gray-50 px-4 py-6 sm:px-6 sm:py-10">
+      <div className="mx-auto max-w-lg">
+        <form onSubmit={handleSubmit} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+          <div className="mb-6 text-center">
+            <Heart className="mx-auto h-8 w-8 text-red-600" />
+            <h1 className="mt-2 text-xl font-bold text-gray-900 sm:text-2xl">{event.title}</h1>
+            {event.description && (
+              <p className="mt-1 text-sm text-gray-500">{event.description}</p>
+            )}
+            <div className="mt-3 flex flex-col items-center gap-1 text-sm text-gray-500 sm:flex-row sm:justify-center sm:gap-4">
+              <span className="flex items-center gap-1.5">
+                <CalendarDays className="h-3.5 w-3.5 text-gray-400" />
+                {formatDate(event.event_date)}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 text-gray-400" />
+                {event.location}
+              </span>
+            </div>
           </div>
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-2xl px-4 py-8">
-        <form onSubmit={handleSubmit} className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900">Donor Registration</h2>
 
           <div className="space-y-4">
             <div>
@@ -475,7 +471,7 @@ export default function RegisterPage() {
                 type="text"
                 value={fullName}
                 onChange={(e) => { setFullName(e.target.value); setFieldErrors((p) => { const n = { ...p }; delete n.full_name; return n }) }}
-                className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
+                className={`mt-1 block w-full rounded-lg border px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
                   fieldErrors.full_name ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Juan dela Cruz"
@@ -491,7 +487,7 @@ export default function RegisterPage() {
                 type="email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setFieldErrors((p) => { const n = { ...p }; delete n.email; return n }) }}
-                className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
+                className={`mt-1 block w-full rounded-lg border px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
                   fieldErrors.email ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="juan@example.com"
@@ -506,7 +502,7 @@ export default function RegisterPage() {
               <select
                 value={bloodType}
                 onChange={(e) => { setBloodType(e.target.value); setFieldErrors((p) => { const n = { ...p }; delete n.blood_type; return n }) }}
-                className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
+                className={`mt-1 block w-full rounded-lg border px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
                   fieldErrors.blood_type ? 'border-red-500' : 'border-gray-300'
                 }`}
               >
@@ -517,25 +513,25 @@ export default function RegisterPage() {
               </select>
               {fieldErrors.blood_type && <p className="mt-1 text-sm text-red-600">{fieldErrors.blood_type}</p>}
             </div>
+
+            {event.custom_form_schema && event.custom_form_schema.length > 0 && (
+              <>
+                <hr className="border-gray-200" />
+                <div className="space-y-4">
+                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Additional Information</h3>
+                  {event.custom_form_schema.map((field) => renderCustomField(field))}
+                </div>
+              </>
+            )}
           </div>
 
-          {event.custom_form_schema && event.custom_form_schema.length > 0 && (
-            <>
-              <hr className="border-gray-200" />
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Additional Information</h3>
-                {event.custom_form_schema.map((field) => renderCustomField(field))}
-              </div>
-            </>
-          )}
-
           {submitError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
               {submitError}
             </div>
           )}
 
-          <Button type="submit" disabled={submitting} className="w-full">
+          <Button type="submit" disabled={submitting} className="mt-6 w-full py-2.5">
             {submitting ? <Spinner size="sm" className="mr-2" /> : null}
             {submitting ? 'Submitting...' : 'Register as Donor'}
           </Button>
