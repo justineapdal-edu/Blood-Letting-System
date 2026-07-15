@@ -23,7 +23,6 @@ export default function RegisterPage() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [donorId, setDonorId] = useState<string | null>(null)
-  const ticketCanvasRef = useRef<HTMLCanvasElement>(null)
   const hiddenQrRef = useRef<HTMLDivElement>(null)
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -233,12 +232,14 @@ export default function RegisterPage() {
     }
   }
 
-  function downloadQR() {
+  async function downloadQR() {
     if (!event || !donorId) return
 
-    const W = 600
-    const H = 900
-    const HEADER_H = 100
+    const fontLoaded = await document.fonts.load('16px Geist').catch(() => false)
+    const fontFamily = fontLoaded ? 'Geist, sans-serif' : 'sans-serif'
+
+    const W = 480
+    const H = 620
     const scale = 2
     const canvas = document.createElement('canvas')
     canvas.width = W * scale
@@ -247,114 +248,103 @@ export default function RegisterPage() {
     if (!ctx) return
     ctx.scale(scale, scale)
 
-    ctx.fillStyle = '#f9fafb'
-    ctx.fillRect(0, 0, W, H)
+    const cardX = 16, cardY = 16, cardW = W - 32, cardH = H - 32
 
-    const cardX = 20, cardY = 20, cardW = W - 40, cardH = H - 40
     ctx.fillStyle = '#ffffff'
-    roundRect(ctx, cardX, cardY, cardW, cardH, 16)
+    roundRect(ctx, cardX, cardY, cardW, cardH, 12)
     ctx.fill()
     ctx.strokeStyle = '#e5e7eb'
     ctx.lineWidth = 1
-    roundRect(ctx, cardX, cardY, cardW, cardH, 16)
+    roundRect(ctx, cardX, cardY, cardW, cardH, 12)
     ctx.stroke()
 
-    ctx.fillStyle = '#dc2626'
-    roundRectTop(ctx, cardX, cardY, cardW, HEADER_H, 16)
-    ctx.fill()
-    ctx.fillStyle = '#ffffff'
-    ctx.font = 'bold 22px sans-serif'
+    let y = cardY + 28
+
+    ctx.fillStyle = '#111827'
+    ctx.font = `bold 18px ${fontFamily}`
     ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(event.title, W / 2, cardY + HEADER_H / 2)
-
-    let y = cardY + HEADER_H + 30
-
-    const qrSize = 220
-    const qrX = (W - qrSize) / 2
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(qrX - 10, y - 10, qrSize + 20, qrSize + 20)
-    ctx.strokeStyle = '#e5e7eb'
-    ctx.lineWidth = 1
-    ctx.strokeRect(qrX - 10, y - 10, qrSize + 20, qrSize + 20)
-
-    const hiddenCanvas = hiddenQrRef.current?.querySelector('canvas')
-    if (hiddenCanvas) {
-      ctx.drawImage(hiddenCanvas, qrX, y, qrSize, qrSize)
-    }
-    y += qrSize + 15
-
-    ctx.fillStyle = '#6b7280'
-    ctx.font = '12px sans-serif'
-    ctx.textAlign = 'center'
-    ctx.fillText('Present this QR code at the event for check-in', W / 2, y)
+    ctx.textBaseline = 'top'
+    ctx.fillText(event.title, W / 2, y)
     y += 30
 
     ctx.strokeStyle = '#e5e7eb'
     ctx.lineWidth = 1
     ctx.beginPath()
-    ctx.moveTo(cardX + 30, y)
-    ctx.lineTo(cardX + cardW - 30, y)
+    ctx.moveTo(cardX + 24, y)
+    ctx.lineTo(cardX + cardW - 24, y)
     ctx.stroke()
-    y += 20
+    y += 16
+
+    const qrSize = 200
+    const qrX = (W - qrSize) / 2
+    const hiddenCanvas = hiddenQrRef.current?.querySelector('canvas')
+    if (hiddenCanvas) {
+      ctx.drawImage(hiddenCanvas, qrX, y, qrSize, qrSize)
+    }
+    y += qrSize + 12
+
+    ctx.fillStyle = '#6b7280'
+    ctx.font = `11px ${fontFamily}`
+    ctx.textAlign = 'center'
+    ctx.fillText('Present this QR code at the event for check-in', W / 2, y)
+    y += 22
+
+    ctx.strokeStyle = '#e5e7eb'
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(cardX + 24, y)
+    ctx.lineTo(cardX + cardW - 24, y)
+    ctx.stroke()
+    y += 16
 
     ctx.textAlign = 'left'
     ctx.textBaseline = 'top'
-    const leftCol = cardX + 40
-    const rightCol = W / 2 + 10
-    const labelFont = '11px sans-serif'
-    const valueFont = '13px sans-serif'
+    const leftCol = cardX + 32
+    const rightCol = W / 2 + 8
+    const labelFont = `10px ${fontFamily}`
+    const valueFont = `12px ${fontFamily}`
 
     ctx.fillStyle = '#9ca3af'
     ctx.font = labelFont
     ctx.fillText('EVENT DATE', leftCol, y)
     ctx.fillStyle = '#111827'
     ctx.font = valueFont
-    ctx.fillText(new Date(event.event_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }), leftCol, y + 16)
+    ctx.fillText(new Date(event.event_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }), leftCol, y + 14)
 
     ctx.fillStyle = '#9ca3af'
     ctx.font = labelFont
     ctx.fillText('LOCATION', rightCol, y)
     ctx.fillStyle = '#111827'
     ctx.font = valueFont
-    const locText = event.location.length > 22 ? event.location.slice(0, 22) + '...' : event.location
-    ctx.fillText(locText, rightCol, y + 16)
-    y += 42
+    const locText = event.location.length > 20 ? event.location.slice(0, 20) + '...' : event.location
+    ctx.fillText(locText, rightCol, y + 14)
+    y += 34
 
     ctx.fillStyle = '#9ca3af'
     ctx.font = labelFont
     ctx.fillText('DONOR NAME', leftCol, y)
     ctx.fillStyle = '#111827'
     ctx.font = valueFont
-    ctx.fillText(fullName.trim(), leftCol, y + 16)
+    ctx.fillText(fullName.trim(), leftCol, y + 14)
 
     ctx.fillStyle = '#9ca3af'
     ctx.font = labelFont
     ctx.fillText('BLOOD TYPE', rightCol, y)
     ctx.fillStyle = '#111827'
     ctx.font = valueFont
-    ctx.fillText(bloodType, rightCol, y + 16)
-    y += 42
-
-    ctx.fillStyle = '#9ca3af'
-    ctx.font = labelFont
-    ctx.fillText('EMAIL', leftCol, y)
-    ctx.fillStyle = '#111827'
-    ctx.font = valueFont
-    const emailText = email.trim().length > 28 ? email.trim().slice(0, 28) + '...' : email.trim()
-    ctx.fillText(emailText, leftCol, y + 16)
-    y += 42
+    ctx.fillText(bloodType, rightCol, y + 14)
+    y += 34
 
     ctx.strokeStyle = '#e5e7eb'
     ctx.lineWidth = 1
     ctx.beginPath()
     ctx.moveTo(leftCol, y)
-    ctx.lineTo(cardX + cardW - 40, y)
+    ctx.lineTo(cardX + cardW - 32, y)
     ctx.stroke()
-    y += 14
+    y += 10
 
     ctx.fillStyle = '#9ca3af'
-    ctx.font = '10px sans-serif'
+    ctx.font = `9px ${fontFamily}`
     ctx.textAlign = 'center'
     ctx.fillText(`Registration ID: ${donorId}`, W / 2, y)
 
@@ -373,18 +363,6 @@ export default function RegisterPage() {
     ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
     ctx.lineTo(x + r, y + h)
     ctx.quadraticCurveTo(x, y + h, x, y + h - r)
-    ctx.lineTo(x, y + r)
-    ctx.quadraticCurveTo(x, y, x + r, y)
-    ctx.closePath()
-  }
-
-  function roundRectTop(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
-    ctx.beginPath()
-    ctx.moveTo(x + r, y)
-    ctx.lineTo(x + w - r, y)
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r)
-    ctx.lineTo(x + w, y + h)
-    ctx.lineTo(x, y + h)
     ctx.lineTo(x, y + r)
     ctx.quadraticCurveTo(x, y, x + r, y)
     ctx.closePath()
@@ -426,10 +404,10 @@ export default function RegisterPage() {
           {donorId && (
             <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
               <p className="mb-4 text-sm font-medium text-gray-700">Your Registration Ticket</p>
-              <div className="inline-block rounded-lg border border-gray-100 bg-white p-4 shadow-inner">
+              <div className="inline-block rounded-lg border border-gray-100 bg-white p-2 shadow-inner">
                 <QRCodeSVG
                   value={donorId}
-                  size={200}
+                  size={180}
                   bgColor="#ffffff"
                   fgColor="#1f2937"
                   level="H"
