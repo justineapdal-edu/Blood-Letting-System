@@ -9,6 +9,7 @@ export function proxy(request: NextRequest) {
     pathname.startsWith('/auth/login') ||
     pathname.startsWith('/auth') && pathname === '/auth' ||
     pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/api/events') ||
     pathname.startsWith('/register') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon')
