@@ -1,150 +1,203 @@
-# Blood Donor Admin Portal & Dynamic Data Hub
+# Blood Letting Donation Event Manager
 ## System Overview
 
-The system is a highly scalable Admin Portal and Dynamic Data Hub designed for the rapid intake, processing, and management of blood donors. Instead of relying on a static setup, the system is fully customizable — allowing administrators to instantly connect external Google Forms on the fly, auto-generate corresponding database tables, and manage records in tailored, high-performance data grids.
+A comprehensive admin portal and donor registration system for managing blood donation events. Administrators can create events, build custom registration forms, generate secure public registration links, scan QR codes for donor check-in, and track donations through a full lifecycle — all from a single responsive interface.
 
-The system must be built with a **modern UI/UX component library** (clean, responsive, accessible, and consistent across all screens) and must follow a **scalable file architecture** that supports maintainable growth as new forms, tables, and features are added over time.
+---
+
+## Architecture
+
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 16 (App Router), React 19, TypeScript |
+| Styling | Tailwind CSS v4 |
+| Database | Supabase PostgreSQL + Row Level Security |
+| Auth | Supabase Auth (email/password) with custom context |
+| QR Codes | `qrcode.react` (generation), `html5-qrcode` (scanning) |
+| Icons | lucide-react |
+| Routing | Multi-domain — admin on main domain, donor portal on configurable `NEXT_PUBLIC_DONOR_PORTAL_URL` |
 
 ---
 
 ## Core Features
 
-### 1. Form Integration Manager (Dynamic Connection Setup)
+### 1. Blood Drive Event Management
 
-- **No-Code Connector Form:** A dedicated administration configuration screen where the admin can input a friendly name for a new blood drive (e.g., "Barangay Central Drive - August 2026").
-- **Secure Token Authentication:** The system auto-generates a unique security secret key (`Connection Token`) for each setup. This key is pasted into the universal Google Apps Script to verify and authorize incoming traffic.
-- **Auto-Schema & Table Generation:** When the first test payload arrives from Google Forms, the system's backend intelligently reads the question titles and automatically executes database scripts to create a brand new, custom table mapping exactly to that form's specific structure.
+- **Create and manage events** with title, description, date/time, location, and status (draft / active / completed / cancelled).
+- **Custom form builder** — per-event dynamic fields (text, number, date, select, checkbox) with optional descriptions and required toggle. Schema stored as JSONB in `blood_events.custom_form_schema`.
+- **Event cards** on the events listing page with search and sort. Click any card to open the full event detail page.
+- **Inline 3-dot menu** for quick edit / delete actions.
+- **Status badge** with color coding for each event state.
 
-### 2. Multi-Donor Batch Entry Grid (Context-Aware Tables)
+### 2. Donor Registration
 
-- **Dynamic Data Layouts:** Once a form is connected, a dedicated tab appears in the navigation panel, opening up an Excel-like editable grid formatted precisely to match that specific form's columns.
-- **Rapid Keyboard Intake:** Optimized heavily for speed, allowing an admin at a registration venue to add new rows, type out entries, and navigate cells purely using arrow keys, `Tab`, and `Enter` without touching a mouse.
-- **Inline Controls & Validation:** Features context-aware dropdown elements right within table cells for swift data selection (e.g., Blood Type, Eligibility Status) to eliminate manual typo errors.
+- **Admin-side registration** — register donors directly from the event detail page.
+- **Public registration form** — accessible without login at `/register/[event_id]`. Supports both baseline fields (name, email, blood type) and dynamic custom fields defined by the admin.
+- **QR ticket generation** — on successful registration, a downloadable ticket is displayed with:
+  - Event title and date
+  - QR code encoding the registration UUID
+  - Donor name, blood type, and registration ID
+  - High-res canvas rendering with Geist font for print quality
+- **Duplicate prevention** — email + blood type + event uniqueness enforced.
 
-### 3. Real-Time Webhook Engine
+### 3. QR Code System
 
-- **Instant Sync:** Powered by a lightweight, reusable Google Apps Script template attached to your forms. The moment a donor clicks "Submit" on a Google Form, the webhook pushes the data as a clean JSON package directly to your admin portal backend.
-- **Multi-Form Capability:** The system can securely manage and sort incoming donor submissions from multiple different forms (e.g., running separate drives for different locations simultaneously) into their respective intake grids seamlessly.
+- **QR generation** — SVG QR codes embedded in on-screen display and downloadable canvas tickets.
+- **QR scanning** — camera-based QR scanner modal (`html5-qrcode`) for rapid check-in at donation venues. Scanner reads the UUID from the QR code and looks up the donor via the API.
+- **Donor lookup fallback** — when a scanned donor isn't found in the local event list, the system falls back to a GET API call to find the donor across events.
+- **Check-in flow** — mark donors as `arrived` (boolean) and update `donation_status` (pending → passed / failed).
 
-### 4. Master Registry & Archive
+### 4. Donation Workflow
 
-- **Historic Repository:** A read-only central warehouse of all historical, validated donor records across all blood drives.
-- **Search & Filter Mechanics:** Equipped with robust search bar capabilities allowing admins to look up past records by Name, Contact Number, or specific Blood Type on demand.
+Four statuses tracked per donor registration:
+
+| Status | Meaning |
+|---|---|
+| `pending` | Donor arrived, donation not yet processed |
+| `passed` | Donation completed successfully |
+| `failed` | Donor was ineligible or donation failed |
+
+- `arrived` boolean flag tracks physical arrival.
+- Status and arrival can be updated from the event detail donor table or via QR scan check-in.
+
+### 5. Dashboard
+
+Full-width analytics dashboard with:
+
+- **Stat cards** — total donors, active events, completed donations, and other key metrics.
+- **Blood type distribution** — CSS donut chart (conic-gradient) showing donor breakdown by blood type.
+- **Top events** — bar chart of events by registration count.
+- **Upcoming events** — list of upcoming blood drives.
+- **Recent registrations** — latest donor entries across all events.
+- **API endpoint** — `GET /api/dashboard/stats` runs parallel Supabase queries for all dashboard data.
+
+### 6. Master Registry
+
+Searchable, sortable, filterable table of **all donors across all events**:
+
+- **Search** by name or email.
+- **Filter** by blood type and donation status.
+- **Sort** by name, email, blood type, event, registration date, or status.
+- **Pagination** with prev/next controls.
+- **Click-through** — click any row to navigate to the parent event detail page.
+- **API endpoint** — `GET /api/registry` with query parameters for search, filter, sort, and pagination.
+
+### 7. Google Sheets Import
+
+- Import donor data from Google Sheets into the system.
+- Connector form for entering spreadsheet details and mapping columns.
+
+### 8. Settings
+
+Full-width settings page with three sections:
+
+- **Profile** — current user name and email from auth context.
+- **Portal Configuration** — donor portal URL display and copy button (sourced from `NEXT_PUBLIC_DONOR_PORTAL_URL`).
+- **System Info** — application name, framework version, database, and environment badge.
 
 ---
 
-## Additional System Requirements
+## Security
 
-### Modern UI/UX Components
-
-- The interface must use a modern, consistent component library (e.g., accessible design system components for forms, tables, modals, dropdowns, and navigation).
-- Responsive layouts that work across desktop and tablet devices, since admins may register donors on-site using different hardware.
-- Clear visual feedback for real-time actions (e.g., new submission notifications, save states, validation errors).
-- Consistent theming, typography, and spacing across all admin screens for a polished, professional experience.
-
-### Scalable File Architecture
-
-- The codebase must be organized to support continuous growth — new dynamically generated forms/tables should not require restructuring the core application.
-- Clear separation of concerns: frontend components, backend services/API routes, database schema/migrations, and webhook handlers should live in distinct, well-defined modules.
-- Support for dynamically generated resources (auto-created tables and their corresponding UI grids) without hardcoding form-specific logic into the core system.
-- Maintainable naming conventions and folder structures that allow multiple developers to work on the system in parallel as it scales.
+| Control | Implementation |
+|---|---|
+| Row Level Security | Supabase RLS on `donor_registrations` — anonymous users can only INSERT, no SELECT |
+| Admin access | Service-role key used for all admin API routes |
+| Route protection | `src/proxy.ts` whitelists public paths (`/register/*`), all others require auth |
+| Origin validation | API routes verify request origin against expected domain |
+| Rate limiting | Applied to public registration endpoints |
+| Input validation | Zod schema validation on all API inputs |
+| Input sanitization | XSS prevention on all user-supplied data |
 
 ---
 
-## Suggested File Architecture
+## Database Schema
 
-A scalable architecture suited to this system's needs — dynamic schema generation, webhook ingestion, and a data-grid-heavy admin UI. It follows a modular monorepo pattern so backend, frontend, and dynamic resources stay decoupled as the system grows.
+### Migrations
+
+| Migration | Purpose |
+|---|---|
+| `001_initial_schema.sql` | Core tables — users, admins, base schema |
+| `002_blood_events.sql` | `blood_events` table with JSONB `custom_form_schema` |
+| `003_donation_workflow.sql` | `arrived` boolean + `donation_status` enum on `donor_registrations` |
+
+### Key Tables
+
+- **`blood_events`** — event metadata, custom form schema (JSONB), status
+- **`donor_registrations`** — donor info, event reference, custom form responses (JSONB), arrival flag, donation status, QR registration ID
+
+---
+
+## File Structure
 
 ```
-blood-donor-admin-portal/
-│
-├── apps/
-│   ├── web/                          # Frontend (Admin Portal)
-│   │   ├── src/
-│   │   │   ├── app/                  # Routes/pages (e.g. Next.js app router)
-│   │   │   │   ├── dashboard/
-│   │   │   │   ├── forms/            # Form Integration Manager screens
-│   │   │   │   ├── grids/            # Dynamic per-form data grid views
-│   │   │   │   │   └── [formId]/     # Dynamically rendered grid per connected form
-│   │   │   │   ├── registry/         # Master Registry & Archive
-│   │   │   │   └── auth/
-│   │   │   │
-│   │   │   ├── components/
-│   │   │   │   ├── ui/               # Design system primitives (buttons, modals, inputs)
-│   │   │   │   ├── grid/             # Reusable dynamic data-grid engine
-│   │   │   │   │   ├── DynamicGrid.tsx
-│   │   │   │   │   ├── CellEditor.tsx
-│   │   │   │   │   ├── DropdownCell.tsx
-│   │   │   │   │   └── KeyboardNav.ts
-│   │   │   │   ├── forms/            # Connector setup form components
-│   │   │   │   └── layout/           # Nav panel, shell, theming
-│   │   │   │
-│   │   │   ├── hooks/                # useDynamicSchema, useRealtimeSync, etc.
-│   │   │   ├── lib/                  # API client, formatters, validators
-│   │   │   ├── styles/               # Theme tokens, global styles
-│   │   │   └── types/                # Shared frontend types
-│   │   └── package.json
+blood-letting-system/
+├── src/
+│   ├── app/                          # Next.js App Router
+│   │   ├── auth/                     # Login & signup pages
+│   │   ├── dashboard/                # Analytics dashboard
+│   │   ├── events/                   # Event CRUD + detail + edit
+│   │   ├── forms/                    # Google Sheets Import
+│   │   ├── grids/                    # Dynamic data grids
+│   │   ├── register/[event_id]/      # Public donor registration form
+│   │   ├── registry/                 # Master donor registry
+│   │   ├── settings/                 # System settings
+│   │   └── api/                      # API routes
+│   │       ├── auth/                 # Authentication endpoints
+│   │       ├── config/               # App config (portal URL)
+│   │       ├── dashboard/stats/      # Dashboard aggregation
+│   │       ├── events/               # Event + donor CRUD
+│   │       ├── records/              # Generic table record access
+│   │       ├── registry/             # Registry query endpoint
+│   │       └── sheets/               # Google Sheets integration
 │   │
-│   └── api/                          # Backend service
-│       ├── src/
-│       │   ├── modules/
-│       │   │   ├── form-integration/         # No-code connector logic
-│       │   │   │   ├── controller.ts
-│       │   │   │   ├── service.ts
-│       │   │   │   ├── token.service.ts      # Connection Token generation/validation
-│       │   │   │   └── schema-generator.ts   # Auto-schema & table creation logic
-│       │   │   │
-│       │   │   ├── webhook/                  # Real-Time Webhook Engine
-│       │   │   │   ├── controller.ts         # Receives Google Apps Script payloads
-│       │   │   │   ├── payload-parser.ts
-│       │   │   │   └── dispatcher.ts         # Routes payload to correct dynamic table
-│       │   │   │
-│       │   │   ├── dynamic-records/          # CRUD for auto-generated tables
-│       │   │   │   ├── controller.ts
-│       │   │   │   ├── service.ts
-│       │   │   │   └── query-builder.ts      # Generic query layer for dynamic schemas
-│       │   │   │
-│       │   │   ├── registry/                 # Master Registry & Archive
-│       │   │   │   ├── controller.ts
-│       │   │   │   ├── service.ts
-│       │   │   │   └── search.service.ts
-│       │   │   │
-│       │   │   └── auth/                     # Admin authentication & authorization
-│       │   │
-│       │   ├── db/
-│       │   │   ├── migrations/               # Static/core schema migrations
-│       │   │   ├── dynamic-migrations/       # Auto-generated table migration logs
-│       │   │   ├── models/                   # Core models (Admin, FormConnection, Token)
-│       │   │   └── client.ts                 # DB connection instance
-│       │   │
-│       │   ├── middleware/                   # Token validation, rate limiting, logging
-│       │   ├── config/                       # Env config, constants
-│       │   └── utils/
-│       └── package.json
+│   ├── components/
+│   │   ├── ui/                       # Design system (Button, Input, Modal, Dropdown, Spinner, Toast)
+│   │   ├── layout/                   # Shell, Sidebar (mobile hamburger + desktop)
+│   │   ├── grid/                     # Dynamic data grid engine
+│   │   ├── forms/                    # SheetsImporter
+│   │   ├── auth-guard.tsx            # Route protection component
+│   │   └── QRScanner.tsx             # Camera QR scanner modal
+│   │
+│   ├── hooks/                        # useDynamicSchema, useRealtimeSync
+│   ├── lib/                          # Auth context, Supabase clients, API client, validators
+│   ├── types/                        # TypeScript interfaces and shared types
+│   ├── styles/                       # Theme tokens
+│   └── proxy.ts                      # Next.js 16 route protection (replaces middleware)
 │
-├── packages/                          # Shared code across web & api
-│   ├── types/                         # Shared TypeScript interfaces (Form, Record, Token)
-│   ├── validators/                    # Shared schema validation (zod/yup)
-│   └── constants/                     # Blood types, eligibility statuses, enums
-│
-├── scripts/
-│   └── apps-script-template/          # Reusable Google Apps Script webhook template
-│       └── webhook.gs
-│
-├── infra/                             # Deployment & infrastructure
-│   ├── docker/
-│   ├── ci-cd/
-│   └── env/
-│
-└── docs/
-    ├── system-overview.md
-    └── architecture.md
+├── supabase/migrations/              # SQL schema migrations (001–003)
+├── scripts/apps-script-template/     # Google Apps Script templates
+└── docs/                             # Documentation
 ```
 
-### Key Design Principles
+---
 
-- **Dynamic schema isolation** — `schema-generator.ts` and `dynamic-migrations/` keep auto-created tables separate from core (static) tables like `Admin` or `FormConnection`, so dynamic growth never touches core migration history.
-- **Generic query layer** — `query-builder.ts` lets one service handle CRUD for *any* dynamically generated table instead of writing custom code per form.
-- **Grid engine as a reusable module** — `components/grid/` is form-agnostic; it renders based on schema metadata fetched per `formId`, so a new blood drive form needs zero new frontend code.
-- **Webhook decoupling** — the webhook module only parses and dispatches; it doesn't know about UI or grid logic, keeping ingestion resilient even if the frontend changes.
-- **Shared packages** — types/enums (like blood types) live in one place so frontend and backend never drift out of sync.
+## Mobile Responsiveness
+
+- **Sidebar** — toggles via hamburger icon on mobile; overlay + backdrop on small screens, permanent sidebar on desktop.
+- **Pages** — responsive padding (`px-4 sm:px-6`), responsive grid layouts (`grid-cols-2 lg:grid-cols-4`), horizontal scroll on data tables for small screens.
+- **Event detail** — full-width donor table with hidden columns on mobile, QR scanner as full-screen modal.
+- **Registration form** — single-column layout on mobile, multi-field on desktop.
+
+---
+
+## API Reference
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/auth/login` | POST | Sign in with email/password |
+| `/api/auth/signup` | POST | Create new account |
+| `/api/auth/logout` | POST | Sign out |
+| `/api/auth/session` | GET | Get current session |
+| `/api/config` | GET | Returns portal URL config |
+| `/api/dashboard/stats` | GET | Aggregated dashboard statistics |
+| `/api/events` | GET / POST | List all events / Create new event |
+| `/api/events/[id]` | GET / PUT / DELETE | Get / Update / Delete single event |
+| `/api/events/[id]/donors` | POST | Register a donor for an event |
+| `/api/events/[id]/donors/[donorId]` | GET / PATCH | Look up donor / Update arrival & status |
+| `/api/registry` | GET | Search, filter, sort, and paginate all donors |
+| `/api/sheets` | GET / POST | List / Create Google Sheets connections |
+| `/api/sheets/[id]` | GET / PUT / DELETE | Manage individual sheet connection |
+| `/api/sheets/[id]/sync` | POST | Trigger sync from a connected sheet |
+| `/api/sheets/connect` | POST | Connect to a Google Sheet |
+| `/api/records/[tableName]` | GET / POST | Generic record access for dynamic tables |
