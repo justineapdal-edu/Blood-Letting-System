@@ -6,7 +6,9 @@ import Link from 'next/link'
 import { Button, Spinner, Toast } from '@/components/ui'
 import type { BloodEvent, DonorRegistration, DonationStatus, CustomFieldSchema } from '@/types'
 import { DONATION_STATUS_OPTIONS } from '@/types'
-import { ArrowLeft, CalendarDays, MapPin, Users, Copy, Check, ExternalLink, Search, ArrowUpDown } from 'lucide-react'
+import { ArrowLeft, CalendarDays, MapPin, Users, Copy, Check, ExternalLink, Search, ArrowUpDown, ScanLine } from 'lucide-react'
+import dynamic from 'next/dynamic'
+const QRScanner = dynamic(() => import('@/components/QRScanner'), { ssr: false })
 
 interface EventWithDonors extends BloodEvent {
   donors: DonorRegistration[]
@@ -43,6 +45,8 @@ export default function EventDetailPage() {
 
   const [donorSearch, setDonorSearch] = useState('')
   const [donorSort, setDonorSort] = useState<{ key: DonorSortKey; dir: 'asc' | 'desc' }>({ key: 'registered_at', dir: 'desc' })
+  const [showScanner, setShowScanner] = useState(false)
+  const [scanResult, setScanResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   useEffect(() => { fetchEvent() }, [eventId])
 
@@ -121,6 +125,32 @@ export default function EventDetailPage() {
     setDonorSort((prev) =>
       prev.key === key ? { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' }
     )
+  }
+
+  async function handleScan(donorId: string) {
+    const donor = event?.donors.find((d) => d.id === donorId)
+    if (!donor) {
+      setScanResult({ type: 'error', message: 'Donor not found for this event.' })
+      return
+    }
+    if (donor.arrived) {
+      setScanResult({ type: 'success', message: `${donor.full_name} is already checked in.` })
+      return
+    }
+    const res = await fetch(`/api/events/${eventId}/donors/${donorId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ arrived: true }),
+    })
+    if (res.ok) {
+      setEvent((prev) => ({
+        ...prev!,
+        donors: prev!.donors.map((d) => d.id === donorId ? { ...d, arrived: true } : d),
+      }))
+      setScanResult({ type: 'success', message: `${donor.full_name} has been checked in successfully!` })
+    } else {
+      setScanResult({ type: 'error', message: 'Failed to check in donor. Please try again.' })
+    }
   }
 
   function formatDate(iso: string) {
@@ -219,6 +249,10 @@ export default function EventDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 ml-4 shrink-0">
+          <Button variant="secondary" onClick={() => { setShowScanner(true); setScanResult(null) }}>
+            <ScanLine className="mr-1.5 h-4 w-4" />
+            Scan QR
+          </Button>
           <Button variant="primary" onClick={copyLink}>
             {copied ? <Check className="mr-1.5 h-4 w-4 text-green-300" /> : <Copy className="mr-1.5 h-4 w-4" />}
             {copied ? 'Copied' : 'Copy Registration Link'}
@@ -322,6 +356,17 @@ export default function EventDetailPage() {
 
       {toast && (
         <Toast type={toast.type} message={toast.message} onDismiss={() => setToast(null)} />
+      )}
+
+      {showScanner && (
+        <QRScanner
+          onScan={(id) => handleScan(id)}
+          onClose={() => { setShowScanner(false); setScanResult(null) }}
+        />
+      )}
+
+      {scanResult && !showScanner && (
+        <Toast type={scanResult.type} message={scanResult.message} onDismiss={() => setScanResult(null)} />
       )}
     </div>
   )

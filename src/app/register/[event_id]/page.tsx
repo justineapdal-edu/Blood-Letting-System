@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { Button, Spinner } from '@/components/ui'
 import { BLOOD_TYPES } from '@/types'
 import type { BloodEvent, CustomFieldSchema } from '@/types'
-import { Heart, CalendarDays, MapPin, CheckCircle } from 'lucide-react'
+import { Heart, CalendarDays, MapPin, CheckCircle, Download } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
 
 export default function RegisterPage() {
   const params = useParams()
@@ -21,6 +22,8 @@ export default function RegisterPage() {
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [donorId, setDonorId] = useState<string | null>(null)
+  const qrRef = useRef<HTMLDivElement>(null)
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
@@ -100,6 +103,7 @@ export default function RegisterPage() {
       })
       const json = await res.json()
       if (!json.success) throw new Error(json.error)
+      setDonorId(json.data.id)
       setSuccess(true)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Registration failed. Please try again.'
@@ -228,6 +232,31 @@ export default function RegisterPage() {
     }
   }
 
+  function downloadQR() {
+    if (!qrRef.current) return
+    const svg = qrRef.current.querySelector('svg')
+    if (!svg) return
+
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const svgData = new XMLSerializer().serializeToString(svg)
+    const img = new Image()
+    img.onload = () => {
+      canvas.width = img.width
+      canvas.height = img.height
+      ctx.fillStyle = 'white'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.drawImage(img, 0, 0)
+      const link = document.createElement('a')
+      link.download = `blood-drive-ticket-${donorId}.png`
+      link.href = canvas.toDataURL('image/png')
+      link.click()
+    }
+    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)))
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -260,6 +289,31 @@ export default function RegisterPage() {
           <p className="mt-1 text-sm text-gray-500">
             We look forward to seeing you at {event.location} on {formatDate(event.event_date)}.
           </p>
+
+          {donorId && (
+            <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+              <p className="mb-4 text-sm font-medium text-gray-700">Your Registration Ticket</p>
+              <div ref={qrRef} className="inline-block rounded-lg border border-gray-100 bg-white p-4 shadow-inner">
+                <QRCodeSVG
+                  value={donorId}
+                  size={200}
+                  bgColor="#ffffff"
+                  fgColor="#1f2937"
+                  level="H"
+                  includeMargin={false}
+                />
+              </div>
+              <p className="mt-3 text-xs text-gray-400">Scan this QR code at the event for quick check-in</p>
+              <Button
+                variant="secondary"
+                onClick={downloadQR}
+                className="mt-4"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Download Ticket
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     )
