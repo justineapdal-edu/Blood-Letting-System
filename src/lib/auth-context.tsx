@@ -12,7 +12,6 @@ interface AuthContextType {
   user: User | null
   loading: boolean
   login: (email: string, password: string) => Promise<{ error?: string }>
-  signup: (email: string, password: string, name?: string) => Promise<{ error?: string; message?: string }>
   logout: () => Promise<void>
   refresh: () => Promise<void>
 }
@@ -70,37 +69,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const signup = useCallback(async (email: string, password: string, name?: string) => {
-    try {
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name }),
-      })
-      const data = await res.json()
-
-      if (!data.success) {
-        return { error: data.error }
-      }
-
-      if (data.data?.requiresConfirmation) {
-        return { message: data.message }
-      }
-
-      setUser(data.data.user)
-      return {}
-    } catch (err: any) {
-      return { error: err.message ?? 'Signup failed' }
-    }
-  }, [])
-
   const logout = useCallback(async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
     setUser(null)
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, refresh }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   )

@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
 import { Droplets } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 
@@ -86,12 +85,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-gray-500">
-          Don&apos;t have an account?{' '}
-          <Link href="/auth/signup" className="font-medium text-red-600 hover:text-red-700">
-            Sign up
-          </Link>
-        </p>
+
       </div>
     </div>
   )

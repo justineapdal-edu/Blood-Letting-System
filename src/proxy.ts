@@ -7,7 +7,6 @@ export function proxy(request: NextRequest) {
   // Allow public pages, static assets
   if (
     pathname.startsWith('/auth/login') ||
-    pathname.startsWith('/auth/signup') ||
     pathname.startsWith('/auth') && pathname === '/auth' ||
     pathname.startsWith('/api/auth') ||
     pathname.startsWith('/register') ||

@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 import { Shell } from './layout/Shell'
 
-const publicPages = ['/auth/login', '/auth/signup', '/auth', '/register']
+const publicPages = ['/auth/login', '/auth', '/register']
 
 export function LayoutRouter({ children }: { children: ReactNode }) {
   const pathname = usePathname()
